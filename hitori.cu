@@ -105,9 +105,26 @@ __global__ void kernelRescateF(int *hitori, int *estado, int N){
     if(tId < N*N && c > 0 && c < N) {
         int valor = hitori[tId];
         aux = estado[tId];
-        back = (estado[tId-N] == 6)? true : false;
-        next = (estado[tId+N] == 6)? true : false;
+        back = (estado[tId-1] == 6)? true : false;
+        next = (estado[tId+1] == 6)? true : false;
         estado[tId] = (back || next) ? 5 : aux;
+    }
+}
+
+__global__ void kernelRescateC(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int up, down;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        up = (estado[tId-N] == 6)? true : false;
+        down = (estado[tId+N] == 6)? true : false;
+        estado[tId] = (up || down) ? 5 : aux;
     }
 }
 
