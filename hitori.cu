@@ -77,13 +77,30 @@ __global__ void kernelTripletF(int *hitori, int *estado, int N){
     }
 }
 
+__global__ void kernelTripletC(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool back, next;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        back = (hitori[tId-N] == valor)? true : false;
+        next = (hitori[tId+N] == valor)? true : false;
+        estado[tId] = (back && next) ? 5 : aux;
+    }
+}
+
 /*
     1 -> not multiple
     2 -> multiple per row
     3 -> multiple per column
     4 -> multiple per row and column
-    5 -> not paintable
-    6 -> paintable
+    5 -> not paintable 
+    6 -> paintable // Eliminado
 */
 
 void checkColAndRow(){
