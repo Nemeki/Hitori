@@ -60,6 +60,23 @@ void readHitoriFromFile(fstream* FILE, float* matrixH, int N){
 
 }
 
+__global__ void kernelTripletF(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        back = (hitori[tId-1] == valor)? true : false;
+        next = (hitori[tId+1] == valor)? true : false;
+        estado[tId] = (back && next) ? 5 : aux;
+    }
+}
+
 
 int main(int argc, char* argv[]){
 
@@ -94,6 +111,8 @@ int main(int argc, char* argv[]){
     }
 
     FILE.close();
+
+
 
     return 0;
 }
