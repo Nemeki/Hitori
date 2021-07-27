@@ -82,15 +82,32 @@ __global__ void kernelTripletC(int *hitori, int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    bool back, next;
+    bool up, down;
     int aux;
 
     if(tId < N*N && f > 0 && f < N) {
         int valor = hitori[tId];
         aux = estado[tId];
-        back = (hitori[tId-N] == valor)? true : false;
-        next = (hitori[tId+N] == valor)? true : false;
-        estado[tId] = (back && next) ? 5 : aux;
+        up = (hitori[tId-N] == valor)? true : false;
+        down = (hitori[tId+N] == valor)? true : false;
+        estado[tId] = (up && down) ? 5 : aux;
+    }
+}
+
+__global__ void kernelRescateF(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        back = (estado[tId-N] == 6)? true : false;
+        next = (estado[tId+N] == 6)? true : false;
+        estado[tId] = (back || next) ? 5 : aux;
     }
 }
 
