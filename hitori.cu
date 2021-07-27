@@ -77,6 +77,53 @@ __global__ void kernelTripletF(int *hitori, int *estado, int N){
     }
 }
 
+/*
+    1 -> not multiple
+    2 -> multiple per row
+    3 -> multiple per column
+    4 -> multiple per row and column
+    5 -> not paintable
+    6 -> paintable
+*/
+
+void checkColAndRow(){
+
+
+
+
+}
+
+
+void SetHitoriState( int* Hitori, int* Hit_State, int N){
+
+    for(int j = 0; j < N; j++){
+    	for(int i = 0; i < N; i++){
+            
+            int elem = matrix[i + j*N];
+
+            if( elem != 0 )
+                // iterar por Fila
+                for(int k = 0 + j*N;  k <  ; k++){
+                    if(   )
+
+
+
+                }
+                // iterar por Columna
+
+
+
+            else
+                continue;
+
+            
+        } printf("%d", matrix[i + j*N]);
+    }
+
+
+}
+
+
 
 int main(int argc, char* argv[]){
 
@@ -106,6 +153,8 @@ int main(int argc, char* argv[]){
         Hit_State = new int[N*N];
 
         readHitoriFromFile(&FILE, Hitori, N);
+
+        // Ejecutarse Standard Patterns
 
 
     }
