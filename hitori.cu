@@ -11,6 +11,10 @@
 
 using namespace std;
 
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                             Funciones de apoyo                             */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 // Función para Splitear un String
 void tokenize(string const &str, const char delim, vector<string> &out) {
     // construct a stream from the string
@@ -60,138 +64,6 @@ void readHitoriFromFile(fstream* FILE, int* matrixH, string* matrixHstr, int N){
 
 }
 
-void tripletF(int *hitori, int* estado, int N){
-    int i, aux;
-    bool back, next;
-    for(i = 0; i < N*N; i++){
-        int fila = i/N;
-        int columna = i%N;
-        if(columna > 0 && columna < N){
-            int valor = hitori[i];
-            aux = estado[i];
-            back = (hitori[i-1] == valor)? true : false;
-            next = (hitori[i+1] == vlaor)? true : false;
-            estado[i] = (back && next)? 5 : aux;
-        }
-    }
-}
-
-void tripletC(int *hitori, int *estado, int N){
-    int i, aux;
-    bool up, down;
-    for (i = 0; i < N*N; i++){
-        int fila = i/N;
-        int columna = i%N;
-        if (fila > 0 && fila < N){
-            int valor = hitori[i];
-            aux = estado[i];
-            up = (hitori[i-N] == valor) ? true : false;
-            down = (hitori[i+N] == valor)? true : false;
-            estado[i] = (up && down) ? 5 : aux;
-        }
-    }
-}
-
-void rescateF(int *hitori, int *estado, int N){
-    int i, aux;
-    bool back, next;
-    for (i = 0; i < N*N; i++){
-        int fila = i/N;
-        int columna = i%N;
-        if (columna > 0 && columna < N){
-            int valor = hitori[i];
-            aux = estado[i];
-            back = (estado[i-1] == 6)? true : false;
-            next = (estado[i+1] == 6)? true : false;
-            estado[i] = (back || next) ? 5 : aux;
-        }
-    }
-}
-
-void rescateC(int *hitori, int *estado, int N){
-    int i, aux;
-    bool up, down;
-    for (i = 0; i < N*N; i++){
-        int fila = i/N;
-        int columna = i%N;
-        if (fila > 0 && fila < N){
-            int valor = hitori[i];
-            aux = estado[i];
-            up = (estado[i-N] == 6)? true : false;
-            down = (estado[i+N] == 6)? true : false;
-            estado[i] = (up || down) ? 5 : aux;
-        }
-    }
-}
-
-__global__ void kernelTripletF(int *hitori, int *estado, int N){
-	
-    int tId = threadIdx.x + blockIdx.x * blockDim.x;
-    int f = tId / N; //Fila en que esta
-	int c = tId % N; //Columna en la que esta
-    bool back, next;
-    int aux;
-
-    if(tId < N*N && c > 0 && c < N) {
-        int valor = hitori[tId];
-        aux = estado[tId];
-        back = (hitori[tId-1] == valor)? true : false;
-        next = (hitori[tId+1] == valor)? true : false;
-        estado[tId] = (back && next) ? 5 : aux;
-    }
-}
-
-__global__ void kernelTripletC(int *hitori, int *estado, int N){
-	
-    int tId = threadIdx.x + blockIdx.x * blockDim.x;
-    int f = tId / N; //Fila en que esta
-	int c = tId % N; //Columna en la que esta
-    bool up, down;
-    int aux;
-
-    if(tId < N*N && f > 0 && f < N) {
-        int valor = hitori[tId];
-        aux = estado[tId];
-        up = (hitori[tId-N] == valor)? true : false;
-        down = (hitori[tId+N] == valor)? true : false;
-        estado[tId] = (up && down) ? 5 : aux;
-    }
-}
-
-__global__ void kernelRescateF(int *hitori, int *estado, int N){
-	
-    int tId = threadIdx.x + blockIdx.x * blockDim.x;
-    int f = tId / N; //Fila en que esta
-	int c = tId % N; //Columna en la que esta
-    int back, next;
-    int aux;
-
-    if(tId < N*N && c > 0 && c < N) {
-        int valor = hitori[tId];
-        aux = estado[tId];
-        back = (estado[tId-1] == 6)? true : false;
-        next = (estado[tId+1] == 6)? true : false;
-        estado[tId] = (back || next) ? 5 : aux;
-    }
-}
-
-
-__global__ void kernelRescateC(int *hitori, int *estado, int N){
-	
-    int tId = threadIdx.x + blockIdx.x * blockDim.x;
-    int f = tId / N; //Fila en que esta
-	int c = tId % N; //Columna en la que esta
-    int up, down;
-    int aux;
-
-    if(tId < N*N && f > 0 && f < N) {
-        int valor = hitori[tId];
-        aux = estado[tId];
-        up = (estado[tId-N] == 6)? true : false;
-        down = (estado[tId+N] == 6)? true : false;
-        estado[tId] = (up || down) ? 5 : aux;
-    }
-}
 
 /*
     1 -> not multiple
@@ -216,13 +88,7 @@ bool isRule4Conform(int* Hit_State, int N){
     for( i = 0; i < M.size() ; i++){
 
 
-
     }
-    
-
-
-
-
 }
 
 /*  
@@ -368,16 +234,159 @@ void SetHitoriState( int* Hitori, int* Hit_State, int N){
 
 }
 
+<<<<<<< HEAD
 void updateHitori(string* Hitori_Str, int* Hit_State, int N){
     int i, j;
     for( j = 0; j < N; j++){
         for( i = 0; i < N; i++){   
             if( Hit_State[ i * j*N] == 6)
                 Hitori_Str[i * j*N] = "X";
+=======
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                                     CPU                                    */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+void tripletF(int *hitori, int* estado, int N){
+    int i, aux;
+    bool back, next;
+    for(i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        if(columna > 0 && columna < N){
+            int valor = hitori[i];
+            aux = estado[i];
+            back = (hitori[i-1] == valor)? true : false;
+            next = (hitori[i+1] == vlaor)? true : false;
+            estado[i] = (back && next)? 5 : aux;
         }
     }
 }
 
+void tripletC(int *hitori, int *estado, int N){
+    int i, aux;
+    bool up, down;
+    for (i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        if (fila > 0 && fila < N){
+            int valor = hitori[i];
+            aux = estado[i];
+            up = (hitori[i-N] == valor) ? true : false;
+            down = (hitori[i+N] == valor)? true : false;
+            estado[i] = (up && down) ? 5 : aux;
+        }
+    }
+}
+
+void rescateF(int *hitori, int *estado, int N){
+    int i, aux;
+    bool back, next;
+    for (i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        if (columna > 0 && columna < N){
+            int valor = hitori[i];
+            aux = estado[i];
+            back = (estado[i-1] == 6)? true : false;
+            next = (estado[i+1] == 6)? true : false;
+            estado[i] = (back || next) ? 5 : aux;
+        }
+    }
+}
+
+void rescateC(int *hitori, int *estado, int N){
+    int i, aux;
+    bool up, down;
+    for (i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        if (fila > 0 && fila < N){
+            int valor = hitori[i];
+            aux = estado[i];
+            up = (estado[i-N] == 6)? true : false;
+            down = (estado[i+N] == 6)? true : false;
+            estado[i] = (up || down) ? 5 : aux;
+>>>>>>> d7755e02259851c1e73b401ac37036d07bd5a07f
+        }
+    }
+}
+
+<<<<<<< HEAD
+=======
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                         GPU primera implementacion                         */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+__global__ void kernelTripletF(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        back = (hitori[tId-1] == valor)? true : false;
+        next = (hitori[tId+1] == valor)? true : false;
+        estado[tId] = (back && next) ? 5 : aux;
+    }
+}
+
+__global__ void kernelTripletC(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool up, down;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        up = (hitori[tId-N] == valor)? true : false;
+        down = (hitori[tId+N] == valor)? true : false;
+        estado[tId] = (up && down) ? 5 : aux;
+    }
+}
+
+__global__ void kernelRescateF(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        back = (estado[tId-1] == 6)? true : false;
+        next = (estado[tId+1] == 6)? true : false;
+        estado[tId] = (back || next) ? 5 : aux;
+    }
+}
+
+
+__global__ void kernelRescateC(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int up, down;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = hitori[tId];
+        aux = estado[tId];
+        up = (estado[tId-N] == 6)? true : false;
+        down = (estado[tId+N] == 6)? true : false;
+        estado[tId] = (up || down) ? 5 : aux;
+    }
+}
+
+>>>>>>> d7755e02259851c1e73b401ac37036d07bd5a07f
 
 int main(int argc, char* argv[]){
 
