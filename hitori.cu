@@ -41,6 +41,16 @@ void showMatrix(int *matrix, int N, int M) {
     printf("\n");
 }
 
+void showMatrix(string* matrix, int N, int M) {
+    for(int j = 0; j < M; j++){
+    	for(int i = 0; i < N; i++)
+            cout << matrix[i + j*N] << " ";
+    	printf("\n");
+    }
+    printf("\n");
+}
+
+
 void readHitoriFromFile(fstream* FILE, int* matrixH, string* matrixHstr, int N){
 
     int i, j = 0;
@@ -172,8 +182,6 @@ vector<tuple<int , int>> getRemainingMultiples(int* Hit_State, int N){
     return M;
 }
 
-
-
 void setInitialHitoriState(int *Hit_State, int N) {
 
     for(int j = 0; j < N; j++)
@@ -304,6 +312,24 @@ void rescateC(int *hitori, int *estado, int N){
             estado[i] = (up || down) ? 5 : aux;
         }
     }
+}
+
+void funcionCPU(int* Hitori, int* estado, int N){
+
+    int i;
+
+    // Ejecutar patrones 
+    tripletF(Hitori, estado, N);
+    tripletC(Hitori, estado, N);
+
+    /*    
+    for(i = 0; i < 10; i++){
+
+
+    }
+    */
+
+    return;
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -465,8 +491,54 @@ int main(int argc, char* argv[]){
 
         SetHitoriState( Hitori, Hit_State, N);
 
-        updateHitori(Hitori_Str, Hit_State, N);
+        // Parte CPU
+        // Inicialización variables de tiempo
+        clock_t t1, t2;
+        double ms; 
+
+        t1 = clock();
+        funcionCPU(Hitori, Hit_State, N);
+        t2 = clock();
+        ms = 1000.0 * (double)(t2 - t1) / CLOCKS_PER_SEC;   
+        cout << "Tiempo CPU: " << ms << "[ms]" << endl;
         
+        // Parte GPU
+        // Def tiempos GPU
+        int* HitoriDev, *Hit_StateDev;
+        cudaEvent_t ct1, ct2;
+        float dt;
+        cudaEventCreate(&ct1);
+        cudaEventCreate(&ct2);
+
+        int block_size = 256;					 		              // múltiplo de 32
+        int grid_size  = (int)ceil((float)(N*N)/block_size);         // ceil : función techo 
+
+        cudaMalloc(&HitoriDev, sizeof(int)*N*N);
+        cudaMalloc(&Hit_StateDev, sizeof(int)*N*N);
+
+        cudaEventCreate(&ct1);
+        cudaEventCreate(&ct2);
+        cudaEventRecord(ct1);
+        cudaMemcpy(HitoriDev, Hitori, N*N*sizeof(int), cudaMemcpyHostToDevice);
+        cudaMemcpy(Hit_StateDev, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
+        kernelTripletF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        kernelTripletC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        for(int i = 0; i < 10; i++){
+            kernelMuerteF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+            kernelMuerteC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+            kernelRescateF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+            kernelRescateC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        }
+        cudaMemcpy(Hit_State, Hit_StateDev, N*N*sizeof(int), cudaMemcpyDeviceToHost);
+        cudaEventRecord(ct2);
+        cudaEventSynchronize(ct2);
+        cudaEventElapsedTime(&dt, ct1, ct2);
+
+        cout << "Tiempo GPU 1: " << dt << "[ms]" << endl;
+
+        // Visualizar Hitori
+        updateHitori(Hitori_Str, Hit_State, N);
+        showMatrix(Hitori_Str, Hit_State, N);
 
 
         /*
@@ -484,19 +556,11 @@ int main(int argc, char* argv[]){
         */
 
         // Parte 1: Ejecutarse Standard Patterns    
-        
-
-
-        /*
-        showMatrix(Hitori, N, N);
-
-        printf("\n");
-        */
-
-        showMatrix(Hit_State, N, N);
+    
         
         // Parte 2: 
         
+        /*
         vector<tuple> M; 
         bool flag = false;
         bool inconst;
@@ -539,7 +603,7 @@ int main(int argc, char* argv[]){
 
 
         }
-        
+        */
 
 
 
