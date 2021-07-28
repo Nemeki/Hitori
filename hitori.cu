@@ -101,6 +101,9 @@ bool isRule4Conform(int* Hit_State, int N){
 
 bool StandardCyclePattern(int* Hitori, int* Hit_State, int N){
 
+    
+
+
 
 
 
@@ -422,7 +425,10 @@ int main(int argc, char* argv[]){
         }
         */
 
-        // Parte 1: Ejecutarse Standard Patterns
+        // Parte 1: Ejecutarse Standard Patterns    
+        
+
+
         /*
         showMatrix(Hitori, N, N);
 
@@ -431,8 +437,6 @@ int main(int argc, char* argv[]){
 
         showMatrix(Hit_State, N, N);
         
-
-
         // Parte 2: 
         
         vector<tuple> M; 
