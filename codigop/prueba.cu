@@ -11,9 +11,9 @@
 using namespace std;
 
 // tuple (elem , posElem)
-vector<tuple<int , int>> getRemainingMultiples(Hit_State, N){
+vector<tuple<int , int>> getRemainingMultiples(int* Hit_State,int N){
     
-    int i;
+    int i,j;
     int elem;
     int posElem;
     vector<tuple<int, int>> M;
@@ -45,7 +45,7 @@ vector<tuple<int , int>> getRemainingMultiples(Hit_State, N){
                     M.push_back(tup);
                     break;
                 default:
-                    // code block
+                    break;
             }
 
         }
@@ -68,11 +68,20 @@ int main( ){
     M.push_back(tup1);
     M.push_back(tup2);
 
+    /*
     for( int i = 0; i < M.size() ; i++){
         
         cout << "tuple["<< i <<"] = (" << get<0>(M[i]) <<" ," << get<1>(M[i]) << ") " << endl;
 
     }
+    */
+    int N = 10;
+    string* Hitori = new string[N*N];
+
+    Hitori[0] = "dsadadasdas";
+
+    cout << "EL VALOR DE GIROTIRO : "<< Hitori[0] << endl;
+
 
     return 0;
 

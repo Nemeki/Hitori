@@ -37,7 +37,7 @@ void showMatrix(int *matrix, int N, int M) {
     printf("\n");
 }
 
-void readHitoriFromFile(fstream* FILE, int* matrixH, int N){
+void readHitoriFromFile(fstream* FILE, int* matrixH, string* matrixHstr, int N){
 
     int i, j = 0;
 
@@ -51,8 +51,8 @@ void readHitoriFromFile(fstream* FILE, int* matrixH, int N){
         tokenize(line, delim, row);
 
         for(i = 0; i < N ; i++){
-            matrixH[j++] = stoi(row[i]);
-            
+            matrixHstr[j] = row[i];
+            matrixH[j++] = stoi(row[i]);        
         }
         // Limpiar el buffer de salida  
         row.clear();
@@ -368,13 +368,25 @@ void SetHitoriState( int* Hitori, int* Hit_State, int N){
 
 }
 
+void updateHitori(string* Hitori_Str, int* Hit_State, int N){
+    int i, j;
+    for( j = 0; j < N; j++){
+        for( i = 0; i < N; i++){   
+            if( Hit_State[ i * j*N] == 6)
+                Hitori_Str[i * j*N] = "X";
+        }
+    }
+}
+
 
 int main(int argc, char* argv[]){
 
     fstream FILE;  
 
     int* Hitori;
-    int* Hit_State;
+    string* Hitori_Str;
+    int* Hit_State; 
+     
     int N;
     string line;
     vector<tuple<int, int>> M;
@@ -397,12 +409,17 @@ int main(int argc, char* argv[]){
 
         Hitori = new int[N*N];
         Hit_State = new int[N*N];
+        Hitori_Str = new string[N*N];
 
         setInitialHitoriState(Hit_State, N);
 
-        readHitoriFromFile(&FILE, Hitori, N);
+        readHitoriFromFile(&FILE, Hitori, Hitori_Str, N);
 
         SetHitoriState( Hitori, Hit_State, N);
+
+        updateHitori(Hitori_Str, Hit_State, N);
+        
+
 
         /*
         M = getRemainingMultiples(Hit_State, N);
