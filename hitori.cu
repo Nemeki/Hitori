@@ -7,6 +7,7 @@
 #include <math.h>
 #include <fstream>  // Libreria para leer archivos
 #include <typeinfo> // for 'typeid' to work
+#include <tuple>
 
 using namespace std;
 
@@ -110,6 +111,7 @@ __global__ void kernelRescateF(int *hitori, int *estado, int N){
     }
 }
 
+
 __global__ void kernelRescateC(int *hitori, int *estado, int N){
 	
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
@@ -136,6 +138,109 @@ __global__ void kernelRescateC(int *hitori, int *estado, int N){
     6 -> paintable // Eliminado
 */
 
+/*  
+    Función para consistencia del Hitori
+    Lo que está función hace es mirar si dos multiples
+    en la misma columna o fila tienen el mismo número y si 
+    ambos son not paintable (5).
+*/
+bool isRule4Conform(int* Hit_State, int N){
+    
+    int i;
+    vector<tuple<int, int>> M = getRemainingMultiples(Hit_State, N);
+    
+    for( i = 0; i < M.size() ; i++){
+
+
+
+    }
+    
+
+
+
+
+}
+
+/*  
+    Ejecutar cada vez que un multiplo es pintado (6)
+     1. Setear todas las celdas adyacentes al múltiplo pintado.
+     2. 
+
+
+*/
+
+bool StandardCyclePattern(int* Hitori, int* Hit_State, int N){
+
+
+
+
+    // Comprueba Regla 4: 
+    return isRule4Conform(Hit_State, N);
+
+}
+
+void copyHitoriToHitori(Hit_State, Hit_StateAux, N){
+    int i, j;
+    for(j = 0; j < N; j++)
+        for( i = 0; j < N; j++)
+            Hit_StateAux[i +  j*N] = Hit_State[i + j*N];
+}
+
+void setNotPaintable(int* Hit_State, tuple<int, int> tup ){
+    Hit_State[ get<0>(tup) ] = 5;
+}
+
+void paint(int* Hit_State, tuple<int, int> tup){
+    Hit_State[ get<0>(tup)] = 6;
+    return;
+}
+
+// tuple (elem , posElem)
+vector<tuple<int , int>> getRemainingMultiples(int* Hit_State, int N){
+    
+    int i,j;
+    int elem;
+    int posElem;
+    vector<tuple<int, int>> M;
+    tuple<int, int> tup;
+
+    /*
+        1 -> not multiple
+        2 -> multiple per row
+        3 -> multiple per column
+        4 -> multiple per row and column
+        5 -> not paintable 
+        6 -> paintable // Eliminado
+    */  
+
+    for(j = 0; j < N; j++ ){
+        for(i = 0; i < N; i++){
+            posElem = i + j*N;
+            elem = Hit_State[posElem];
+            tup = make_tuple(elem,posElem);
+            
+            switch(elem) {
+                case 2:
+                    M.push_back(tup);
+                    break;
+                case 3:
+                    M.push_back(tup);
+                    break;
+                case 4:
+                    M.push_back(tup);
+                    break;
+                default:
+                    break;
+            }
+
+        }
+    }
+
+    return M;
+}
+
+
+
 void setInitialHitoriState(int *Hit_State, int N) {
 
     for(int j = 0; j < N; j++)
@@ -145,6 +250,7 @@ void setInitialHitoriState(int *Hit_State, int N) {
 }
 
 void SetHitoriState( int* Hitori, int* Hit_State, int N){
+    
     bool flag1, flag2;
 
     for(int j = 0; j < N; j++){
@@ -204,6 +310,7 @@ int main(int argc, char* argv[]){
     int* Hit_State;
     int N;
     string line;
+    vector<tuple<int, int>> M;
 
     string nameFile = argv[1];
     // Abrir el archivo en modo lectura
@@ -230,12 +337,79 @@ int main(int argc, char* argv[]){
 
         SetHitoriState( Hitori, Hit_State, N);
 
-        // Ejecutarse Standard Patterns
+        /*
+        M = getRemainingMultiples(Hit_State, N);
+
+        for( int i = 0; i < M.size() ; i++){
+
+            int poselem = get<1>(M[i]);
+            int x = poselem%N;
+            int y = poselem/N;
+            
+            cout << "tuple["<< i <<"] = (" << get<0>(M[i]) <<" , ["<< x << "," <<y <<"] ) " << endl;
+
+        }
+        */
+
+        // Parte 1: Ejecutarse Standard Patterns
+        /*
         showMatrix(Hitori, N, N);
 
         printf("\n");
+        */
 
         showMatrix(Hit_State, N, N);
+        
+
+
+        // Parte 2: 
+        
+        vector<tuple> M; 
+        bool flag = false;
+        bool inconst;
+        int* hitaux;
+        int* Hit_StateCpy = new int[N*N];
+        
+        while(!flag){
+            flag = true;
+            for( i = 0; i < M.size(); i++ ){
+                paint(Hit_State, M[i]);
+                // Copia del estado inicial
+                copyHitoriToHitori(Hit_State, Hit_StateAux, N);
+
+                inconst = StandardCyclePattern(Hitori, Hit_State, N);
+
+                if( inconst ){
+                    
+                    // Volver la matrix al estado inicial
+                    hit_aux = Hit_State;
+                    Hit_State = Hit_StateAux;
+                    Hit_StateAux = hit_aux;
+
+                    setNotPaintable(Hitori, Hit_State, N);
+                    
+                    StandardCyclePattern(Hitori, Hit_State, N);
+
+                    M = getRemainingMultiples(Hit_State, N);
+
+                    flag = false;
+                    
+                    break; // seteo i = 0
+
+                }
+
+                
+
+            }
+
+
+
+
+        }
+        
+
+
+
 
 
     }
