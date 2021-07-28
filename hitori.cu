@@ -306,6 +306,38 @@ void rescateC(int *hitori, int *estado, int N){
     }
 }
 
+void muerteF(int *hitori, int *estado, int N){
+    int i, aux1, aux2;
+    for(i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        int valor = hitori[i];
+        aux1 = estado[i];
+        if(aux1 != 5 && aux1 !=6){
+            for(int j = 0; j < N; j++){
+                aux2 = hitori[fila + j];
+                if(valor == aux2) aux1 = (estado[fila+j] == 5)? 6 : aux1;
+            }
+        }
+    }
+}
+
+void muerteF(int *hitori, int *estado, int N){
+    int i, aux1, aux2;
+    for(i = 0; i < N*N; i++){
+        int fila = i/N;
+        int columna = i%N;
+        int valor = hitori[i];
+        aux1 = estado[i];
+        if(aux1 != 5 && aux1 !=6){
+            for(int j = 0; j < N; j++){
+                aux2 = hitori[columna + N*j];
+                if(valor == aux2) aux1 = (estado[columna + N*j] == 5)? 6 : aux1;
+            }
+        }
+    }
+}
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /*                         GPU primera implementacion                         */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -349,7 +381,7 @@ __global__ void kernelRescateF(int *hitori, int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    int back, next;
+    bool back, next;
     int aux;
 
     if(tId < N*N && c > 0 && c < N) {
@@ -367,7 +399,7 @@ __global__ void kernelRescateC(int *hitori, int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    int up, down;
+    bool up, down;
     int aux;
 
     if(tId < N*N && f > 0 && f < N) {
@@ -389,7 +421,7 @@ __global__ void kernelMuerteF(int *hitori, int *estado, int N){
     if(tId < N*N) {
         int valor = hitori[tId];
         aux1 = estado[tId];
-        if = (aux1 != 5 && aux1 != 6){
+        if(aux1 != 5 && aux1 != 6){
             for(int i = 0; i < N; i++){
                 aux2 = hitori[f+i];
                 if(valor == aux2){
@@ -411,7 +443,7 @@ __global__ void kernelMuerteC(int *hitori, int *estado, int N){
     if(tId < N*N) {
         int valor = hitori[tId];
         aux1 = estado[tId];
-        if = (aux1 != 5 && aux1 != 6){
+        if (aux1 != 5 && aux1 != 6){
             for(int i = 0; i < N; i++){
                 aux2 = hitori[c+N*i];
                 if(valor == aux2){
