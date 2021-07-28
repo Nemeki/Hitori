@@ -224,9 +224,7 @@ void SetHitoriState( int* Hitori, int* Hit_State, int N){
             else if( flag1 == true )           //2 -> multiple per row 
                 Hit_State[posElem] = 2;          
             else if( flag2 == true)            //3 -> multiple per column
-                Hit_State[posElem] = 3;  
-            
-        
+                Hit_State[posElem] = 3;
         }
 
     }
@@ -375,6 +373,53 @@ __global__ void kernelRescateC(int *hitori, int *estado, int N){
     }
 }
 
+__global__ void kernelMuerteF(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int aux1, aux2, aux3;
+
+    if(tId < N*N) {
+        int valor = hitori[tId];
+        aux1 = estado[tId];
+        if = (aux1 != 5 && aux1 != 6){
+            for(int i = 0; i < N; i++){
+                aux2 = hitori[f+i];
+                if(valor == aux2){
+                    aux1 = (estado[f+i] == 5)? 6 : aux1;
+                }
+            }
+            estado[tId] = aux1;
+        }
+    }
+}
+
+__global__ void kernelMuerteC(int *hitori, int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int aux1, aux2, aux3;
+
+    if(tId < N*N) {
+        int valor = hitori[tId];
+        aux1 = estado[tId];
+        if = (aux1 != 5 && aux1 != 6){
+            for(int i = 0; i < N; i++){
+                aux2 = hitori[c+N*i];
+                if(valor == aux2){
+                    aux1 = (estado[c+N*i] == 5)? 6 : aux1;
+                }
+            }
+            estado[tId] = aux1;
+        }
+    }
+}
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                                    Main                                    */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 int main(int argc, char* argv[]){
 
