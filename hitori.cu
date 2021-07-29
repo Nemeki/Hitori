@@ -357,7 +357,7 @@ void DobleF(int* hitori,int *estado, int N){
         c = i % N;
         int valor = hitori[i];
         for(int j = 0; j < N; j++){
-            pos = f+j;
+            pos = f*N+j;
             doble = (ant && i != pos && hitori[pos] == valor)? true : doble;
             ant = (i != pos && hitori[pos] == valor)? true : false;
         }
@@ -376,7 +376,7 @@ void muerteF(int *hitori, int *estado, int N){
         aux1 = estado[i];
         if(aux1 != 5 && aux1 !=6){
             for(int j = 0; j < N; j++){
-                aux2 = hitori[fila + j];
+                aux2 = hitori[fila*N + j];
                 if(valor == aux2) aux1 = (estado[fila+j] == 5)? 6 : aux1;
             }
         }
@@ -694,7 +694,7 @@ __global__ void kernelDobleF_CM(int *estado, int N){
     if(tId < N*N) {
         int valor = HitoriCM[tId];
         for(int i = 0; i < N; i++){
-            pos = f+i;
+            pos = f*N+i;
             doble = (ant && tId != pos && HitoriCM[pos] == valor)? true : doble;
             ant = (tId != pos && HitoriCM[pos] == valor)? true : false;
         }
@@ -709,16 +709,17 @@ __global__ void kernelMuerteF_CM(int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    int aux1, aux2, aux3;
+    int aux1, aux2, pos;
 
     if(tId < N*N) {
         int valor = HitoriCM[tId];
         aux1 = estado[tId];
         if(aux1 != 5 && aux1 != 6){
             for(int i = 0; i < N; i++){
-                aux2 = HitoriCM[f+i];
+                pos = f*N+i;
+                aux2 = HitoriCM[pos];
                 if(valor == aux2){
-                    aux1 = (estado[f+i] == 5)? 6 : aux1;
+                    aux1 = (estado[pos] == 5)? 6 : aux1;
                 }
             }
             estado[tId] = aux1;
