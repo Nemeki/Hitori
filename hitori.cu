@@ -17,6 +17,8 @@ using namespace std;
 
 __constant__ int HitoriCM[25*25];  //FIXME: Cambiar cuando se actualice N y M
 
+void funcionQL(string* Hitori_Str, int* Hit_State, int N);
+
 // Función para Splitear un String
 void tokenize(string const &str, const char delim, vector<string> &out) {
     // construct a stream from the string
@@ -181,8 +183,6 @@ void paint(int* Hit_State, tuple<int, int> tup){
     return;
 }
 
-
-
 void setInitialHitoriState(int *Hit_State, int N) {
 
     for(int j = 0; j < N; j++)
@@ -252,9 +252,11 @@ void updateHitori(string* Hitori_Str, int* Hit_State, int N){
     }
     return;
 }
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /*                                     CPU                                    */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
 
 void tripletF(int *hitori, int* estado, int N){
     int i, aux;
@@ -287,6 +289,7 @@ void tripletC(int *hitori, int *estado, int N){
         }
     }
 }
+
 
 void rescateF(int *hitori, int *estado, int N){
     int i, aux;
@@ -324,11 +327,12 @@ void DobleC(int* hitori,int *estado, int N){
 
     int f; //Fila en que esta
 	int c; //Columna en la que esta
-    bool ant = false;
-    bool doble = false;
+
     int pos;
 
     for(int i = 0; i < N*N; i++) {
+        bool ant = false;
+        bool doble = false;
         f = i / N;
         c = i % N;
         int valor = hitori[i];
@@ -348,11 +352,11 @@ void DobleF(int* hitori,int *estado, int N){
     
     int f; //Fila en que esta
 	int c; //Columna en la que esta
-    bool ant = false;
-    bool doble = false;
     int pos;
 
     for(int i = 0; i < N*N; i++) {
+        bool ant = false;
+        bool doble = false;
         f = i / N;
         c = i % N;
         int valor = hitori[i];
@@ -412,20 +416,31 @@ void muerteC(int *hitori, int *estado, int N){
     }
 }
 
-void funcionCPU(int* Hitori, int* estado, int N){
+void funcionCPU(string* Hitori_Str, int* Hitori, int* estado, int N){
 
     int i;
     // Ejecutar patrones 
+    //printf(" - TRIPLETE - \n");
     tripletF(Hitori, estado, N);
     tripletC(Hitori, estado, N);
+    //funcionQL(Hitori_Str, estado, N);
+    //printf(" - DOBLE - \n");
     DobleF(Hitori, estado, N);
     DobleC(Hitori, estado, N);
+    //funcionQL(Hitori_Str, estado, N);
+
  
     for(i = 0; i < 10; i++){
+        //printf(" - MUERTE - \n");
         muerteF(Hitori, estado, N);
         muerteC(Hitori, estado, N);
+        //funcionQL(Hitori_Str, estado, N);
+        //printf(" - RESCATE - \n");
         rescateF(Hitori, estado, N);
         rescateC(Hitori, estado, N);
+        
+        //funcionQL(Hitori_Str, estado, N);
+
     }
 
     return;
@@ -764,6 +779,16 @@ __global__ void kernelMuerteC_CM(int *estado, int N){
     }
 }
 
+void funcionQL(string* Hitori_Str, int* Hit_State, int N){
+    // Visualizar Hitori
+    updateHitori(Hitori_Str, Hit_State, N);
+    showMatrix(Hitori_Str, N, N);
+    printf("\n Hitori Estado \n");
+    showMatrix(Hit_State, N, N); 
+
+
+    return;
+}
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /*                                    Main                                    */
@@ -813,18 +838,13 @@ int main(int argc, char* argv[]){
         double ms; 
 
         t1 = clock();
-        funcionCPU(Hitori, Hit_State, N);
+        funcionCPU(Hitori_Str, Hitori, Hit_State, N);
         t2 = clock();
         ms = 1000.0 * (double)(t2 - t1) / CLOCKS_PER_SEC;   
         printf("Tiempo de CPU: %5f \n", ms);
         //cout << "Tiempo CPU: " << ms << "[ms]" << endl;
 
-                     
-        // Visualizar Hitori
-        updateHitori(Hitori_Str, Hit_State, N);
-        showMatrix(Hitori_Str, N, N);
-        printf("\n Hitori Estado \n");
-        showMatrix(Hit_State, N, N); 
+        funcionQL(Hitori_Str, Hit_State, N);
 
         SetHitoriState( Hitori, Hit_State, N);
 
@@ -864,16 +884,10 @@ int main(int argc, char* argv[]){
 
         cout << "Tiempo GPU 1: " << dt << "[ms]" << endl;
 
-                
-        // Visualizar Hitori
-        updateHitori(Hitori_Str, Hit_State, N);
-        showMatrix(Hitori_Str, N, N);
-        printf("\n Hitori Estado \n");
-        showMatrix(Hit_State, N, N); 
-
+        funcionQL(Hitori_Str, Hit_State, N);
 
         SetHitoriState( Hitori, Hit_State, N);
-
+    
         // Parte GPU 2
         int* Hit_StateDev2;
         cudaMalloc(&Hit_StateDev2, sizeof(int)*N*N);
@@ -896,78 +910,9 @@ int main(int argc, char* argv[]){
         cudaEventSynchronize(ct2);
         cudaEventElapsedTime(&dt, ct1, ct2);
 
+        cout << "Tiempo GPU 2: " << dt << "[ms]" << endl;  
 
-        cout << "Tiempo GPU 2: " << dt << "[ms]" << endl;
-                     
-        // Visualizar Hitori
-        updateHitori(Hitori_Str, Hit_State, N);
-        showMatrix(Hitori_Str, N, N);
-        printf("\n Hitori Estado \n");
-        showMatrix(Hit_State, N, N); 
-
-        /*
-        M = getRemainingMultiples(Hit_State, N);
-
-        for( int i = 0; i < M.size() ; i++){
-
-            int poselem = get<1>(M[i]);
-            int x = poselem%N;
-            int y = poselem/N;
-            
-            cout << "tuple["<< i <<"] = (" << get<0>(M[i]) <<" , ["<< x << "," <<y <<"] ) " << endl;
-
-        }
-        */
-
-        // Parte 1: Ejecutarse Standard Patterns    
-    
-        
-        // Parte 2: 
-        
-        /*
-        vector<tuple> M; 
-        bool flag = false;
-        bool inconst;
-        int* hitaux;
-        int* Hit_StateCpy = new int[N*N];
-        
-        while(!flag){
-            flag = true;
-            for( i = 0; i < M.size(); i++ ){
-                paint(Hit_State, M[i]);
-                // Copia del estado inicial
-                copyHitoriToHitori(Hit_State, Hit_StateAux, N);
-
-                inconst = StandardCyclePattern(Hitori, Hit_State, N);
-
-                if( inconst ){
-                    
-                    // Volver la matrix al estado inicial
-                    hit_aux = Hit_State;
-                    Hit_State = Hit_StateAux;
-                    Hit_StateAux = hit_aux;
-
-                    setNotPaintable(Hitori, Hit_State, N);
-                    
-                    StandardCyclePattern(Hitori, Hit_State, N);
-
-                    M = getRemainingMultiples(Hit_State, N);
-
-                    flag = false;
-                    
-                    break; // seteo i = 0
-
-                }
-
-                
-
-            }
-
-
-
-
-        }
-        */
+        funcionQL(Hitori_Str, Hit_State, N);
 
     }
 
