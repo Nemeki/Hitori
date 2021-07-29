@@ -373,6 +373,8 @@ void funcionCPU(int* Hitori, int* estado, int N){
 /*                         GPU primera implementacion                         */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+/* -------------------------- Deteccion de patrones ------------------------- */
+
 __global__ void kernelTripletF(int *hitori, int *estado, int N){
 	
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
@@ -406,6 +408,50 @@ __global__ void kernelTripletC(int *hitori, int *estado, int N){
         estado[tId] = (up && down) ? 5 : aux;
     }
 }
+
+__global__ void kernelDobleF(int *hitori, int *estado, int N){
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    if(tId < N*N) {
+        int valor = hitori[tId];
+        for(int i = 0; i < N; i++){
+            pos = f+i;
+            doble = (ant && tId != pos && hitori[pos] == valor)? true : doble;
+            ant = (tId != pos && hitori[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[tId] = 6;
+        }
+    }
+}
+
+__global__ void kernelDobleC(int *hitori, int *estado, int N){
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    if(tId < N*N) {
+        int valor = hitori[tId];
+        for(int i = 0; i < N; i++){
+            pos = c+N*i;
+            doble = (ant && tId != pos && hitori[pos] == valor)? true : doble;
+            ant = (tId != pos && hitori[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[tId] = 6;
+        }
+    }
+}
+
+/* ---------------------------- Funciones del for --------------------------- */
 
 __global__ void kernelRescateF(int *hitori, int *estado, int N){
 	
