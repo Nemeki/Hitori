@@ -609,6 +609,8 @@ int main(int argc, char* argv[]){
         cudaMemcpy(Hit_StateDev, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
         kernelTripletF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         kernelTripletC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        kernelDobleF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        kernelDobleC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         for(int i = 0; i < 10; i++){
             kernelMuerteF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
             kernelMuerteC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
