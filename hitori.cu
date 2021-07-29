@@ -15,7 +15,7 @@ using namespace std;
 /*                             Funciones de apoyo                             */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
-__constant__ int HitoriCM[5*5];  //FIXME: Cambiar cuando se actualice N y M
+__constant__ int HitoriCM[25*25];  //FIXME: Cambiar cuando se actualice N y M
 
 // Función para Splitear un String
 void tokenize(string const &str, const char delim, vector<string> &out) {
