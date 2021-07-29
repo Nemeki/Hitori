@@ -47,12 +47,22 @@ void showMatrix(int *matrix, int N, int M) {
 
 void showMatrix(string* matrix, int N, int M) {
     for(int j = 0; j < M; j++){
+        for(int i = 0; i < N; i++)
+            if(matrix[i + j*N].size() == 2) cout << matrix[i + j*N] << "  ";
+            else if(matrix[i + j*N].size() == 1) cout << matrix[i + j*N] << "   ";
+        printf("\n");
+    }
+    printf("\n");
+}
+/*
+void showMatrix(string* matrix, int N, int M) {
+    for(int j = 0; j < M; j++){
     	for(int i = 0; i < N; i++)
             cout << matrix[i + j*N] << " ";
     	printf("\n");
     }
     printf("\n");
-}
+}*/
 
 void readHitoriFromFile(fstream* FILE, int* matrixH, string* matrixHstr, int N){
 
@@ -781,8 +791,8 @@ void funcionQL(string* Hitori_Str, int* Hit_State, int N){
     // Visualizar Hitori
     updateHitori(Hitori_Str, Hit_State, N);
     showMatrix(Hitori_Str, N, N);
-    printf("\n Hitori Estado \n");
-    showMatrix(Hit_State, N, N); 
+    //printf("\n Hitori Estado \n");
+    //showMatrix(Hit_State, N, N); 
     return;
 }
 
