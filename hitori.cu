@@ -84,60 +84,6 @@ void readHitoriFromFile(fstream* FILE, int* matrixH, string* matrixHstr, int N){
     6 -> paintable // Eliminado
 */
 
-/*  
-    Función para consistencia del Hitori
-    Lo que está función hace es mirar si dos multiples
-    en la misma columna o fila tienen el mismo número y si 
-    ambos son not paintable (5).
-*/
-bool isRule4Conform(int* Hit_State, int N){
-    
-    int i;
-    vector<tuple<int, int>> M = getRemainingMultiples(Hit_State, N);
-    
-    for( i = 0; i < M.size() ; i++){
-
-
-    }
-}
-
-/*  
-    Ejecutar cada vez que un multiplo es pintado (6)
-     1. Setear todas las celdas adyacentes al múltiplo pintado.
-     2. 
-
-
-*/
-
-bool StandardCyclePattern(int* Hitori, int* Hit_State, int N){
-
-    
-
-
-
-
-
-    // Comprueba Regla 4: 
-    return isRule4Conform(Hit_State, N);
-
-}
-
-void copyHitoriToHitori(Hit_State, Hit_StateAux, N){
-    int i, j;
-    for(j = 0; j < N; j++)
-        for( i = 0; j < N; j++)
-            Hit_StateAux[i +  j*N] = Hit_State[i + j*N];
-}
-
-void setNotPaintable(int* Hit_State, tuple<int, int> tup ){
-    Hit_State[ get<0>(tup) ] = 5;
-}
-
-void paint(int* Hit_State, tuple<int, int> tup){
-    Hit_State[ get<0>(tup)] = 6;
-    return;
-}
-
 // tuple (elem , posElem)
 vector<tuple<int , int>> getRemainingMultiples(int* Hit_State, int N){
     
@@ -181,6 +127,59 @@ vector<tuple<int , int>> getRemainingMultiples(int* Hit_State, int N){
 
     return M;
 }
+/*  
+    Función para consistencia del Hitori
+    Lo que está función hace es mirar si dos multiples
+    en la misma columna o fila tienen el mismo número y si 
+    ambos son not paintable (5).
+*/
+bool isRule4Conform(int* Hit_State, int N){
+    
+    int i;
+    vector<tuple<int, int>> M = getRemainingMultiples(Hit_State, N);
+    
+    for( i = 0; i < M.size() ; i++){
+
+
+    }
+
+    return true;
+}
+
+/*  
+    Ejecutar cada vez que un multiplo es pintado (6)
+     1. Setear todas las celdas adyacentes al múltiplo pintado.
+     2. 
+
+
+*/
+
+bool StandardCyclePattern(int* Hitori, int* Hit_State, int N){
+
+    // Comprueba Regla 4: 
+    // return isRule4Conform(Hit_State, N);
+
+    return true;
+
+}
+
+void copyHitoriToHitori(int* Hit_State, int* Hit_StateAux, int N){
+    int i, j;
+    for(j = 0; j < N; j++)
+        for( i = 0; j < N; j++)
+            Hit_StateAux[i +  j*N] = Hit_State[i + j*N];
+}
+
+void setNotPaintable(int* Hit_State, tuple<int, int> tup ){
+    Hit_State[ get<0>(tup) ] = 5;
+}
+
+void paint(int* Hit_State, tuple<int, int> tup){
+    Hit_State[ get<0>(tup)] = 6;
+    return;
+}
+
+
 
 void setInitialHitoriState(int *Hit_State, int N) {
 
@@ -242,10 +241,15 @@ void SetHitoriState( int* Hitori, int* Hit_State, int N){
 
 void updateHitori(string* Hitori_Str, int* Hit_State, int N){
     int i, j;
+
     for( j = 0; j < N; j++){
-        for( i = 0; i < N; i++){   
-            if( Hit_State[ i * j*N] == 6)
-                Hitori_Str[i * j*N] = "X";
+        for( i = 0; i < N; i++){
+            if( Hit_State[i + j*N] == 6)
+                Hitori_Str[i + j*N] = "X";
+        }
+    }
+    return;
+}
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /*                                     CPU                                    */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -260,7 +264,7 @@ void tripletF(int *hitori, int* estado, int N){
             int valor = hitori[i];
             aux = estado[i];
             back = (hitori[i-1] == valor)? true : false;
-            next = (hitori[i+1] == vlaor)? true : false;
+            next = (hitori[i+1] == valor)? true : false;
             estado[i] = (back && next)? 5 : aux;
         }
     }
@@ -350,7 +354,6 @@ void muerteC(int *hitori, int *estado, int N){
 void funcionCPU(int* Hitori, int* estado, int N){
 
     int i;
-
     // Ejecutar patrones 
     tripletF(Hitori, estado, N);
     tripletC(Hitori, estado, N);
@@ -419,6 +422,7 @@ __global__ void kernelRescateF(int *hitori, int *estado, int N){
         next = (estado[tId+1] == 6)? true : false;
         estado[tId] = (back || next) ? 5 : aux;
     }
+
 }
 
 
@@ -459,6 +463,7 @@ __global__ void kernelMuerteF(int *hitori, int *estado, int N){
             estado[tId] = aux1;
         }
     }
+
 }
 
 __global__ void kernelMuerteC(int *hitori, int *estado, int N){
@@ -534,7 +539,8 @@ int main(int argc, char* argv[]){
         funcionCPU(Hitori, Hit_State, N);
         t2 = clock();
         ms = 1000.0 * (double)(t2 - t1) / CLOCKS_PER_SEC;   
-        cout << "Tiempo CPU: " << ms << "[ms]" << endl;
+        printf("Tiempo de CPU: %5f \n", ms);
+        //cout << "Tiempo CPU: " << ms << "[ms]" << endl;
         
         // Parte GPU
         // Def tiempos GPU
@@ -572,8 +578,9 @@ int main(int argc, char* argv[]){
 
         // Visualizar Hitori
         updateHitori(Hitori_Str, Hit_State, N);
-        showMatrix(Hitori_Str, Hit_State, N);
-
+        showMatrix(Hitori_Str, N, N);
+        printf("\n\n");
+        showMatrix(Hit_State, N, N);
 
         /*
         M = getRemainingMultiples(Hit_State, N);
