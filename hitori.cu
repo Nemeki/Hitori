@@ -569,7 +569,7 @@ __global__ void kernelMuerteC(int *hitori, int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    int aux1, aux2, aux3;
+    int aux1, aux2, pos;
 
     if(tId < N*N) {
         int valor = hitori[tId];
@@ -834,8 +834,8 @@ int main(int argc, char* argv[]){
         cudaMemcpy(Hit_StateDev, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
         kernelTripletF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         kernelTripletC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
-        //kernelDobleF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
-        //kernelDobleC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        kernelDobleF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        kernelDobleC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         for(int i = 0; i < 10; i++){
             kernelMuerteF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
             kernelMuerteC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
@@ -868,8 +868,8 @@ int main(int argc, char* argv[]){
         cudaMemcpy(Hit_StateDev2, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
         kernelTripletF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
         kernelTripletC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
-        //kernelDobleF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
-        //kernelDobleC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        kernelDobleF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        kernelDobleC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
         for(int i = 0; i < 10; i++){
             kernelMuerteF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
             kernelMuerteC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
