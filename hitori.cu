@@ -320,6 +320,52 @@ void rescateC(int *hitori, int *estado, int N){
     }
 }
 
+void DobleC(int* hitori,int *estado, int N){
+
+    int f; //Fila en que esta
+	int c; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    for(int i = 0; i < N*N; i++) {
+        f = i / N;
+        c = i % N;
+        int valor = hitori[i];
+        for(int j = 0; j < N; j++){
+            pos = c+N*j;
+            doble = (ant && i != pos && hitori[pos] == valor)? true : doble;
+            ant = (i != pos && hitori[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[i] = 6;
+        }
+    }
+
+}
+
+void DobleF(int* hitori,int *estado, int N){
+    
+    int f; //Fila en que esta
+	int c; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    for(int i = 0; i < N*N; i++) {
+        f = i / N;
+        c = i % N;
+        int valor = hitori[i];
+        for(int j = 0; j < N; j++){
+            pos = f+j;
+            doble = (ant && i != pos && hitori[pos] == valor)? true : doble;
+            ant = (i != pos && hitori[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[i] = 6;
+        }
+    }
+}
 
 void muerteF(int *hitori, int *estado, int N){
     int i, aux1, aux2;
@@ -359,6 +405,8 @@ void funcionCPU(int* Hitori, int* estado, int N){
     // Ejecutar patrones 
     tripletF(Hitori, estado, N);
     tripletC(Hitori, estado, N);
+    //DobleF(Hitori, estado, N);
+    //DobleC(Hitori, estado, N);
  
     for(i = 0; i < 10; i++){
         muerteF(Hitori, estado, N);
@@ -409,6 +457,7 @@ __global__ void kernelTripletC(int *hitori, int *estado, int N){
         down = (hitori[tId+N] == valor)? true : false;
         estado[tId] = (up && down) ? 5 : aux;
     }
+
 }
 
 __global__ void kernelDobleF(int *hitori, int *estado, int N){
@@ -611,6 +660,48 @@ __global__ void kernelRescateC_CM(int *estado, int N){
     }
 }
 
+__global__ void kernelDobleC_CM(int *estado, int N){
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    if(tId < N*N) {
+        int valor = HitoriCM[tId];
+        for(int i = 0; i < N; i++){
+            pos = c+N*i;
+            doble = (ant && tId != pos && HitoriCM[pos] == valor)? true : doble;
+            ant = (tId != pos && HitoriCM[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[tId] = 6;
+        }
+    }
+}
+
+__global__ void kernelDobleF_CM(int *estado, int N){
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool ant = false;
+    bool doble = false;
+    int pos;
+
+    if(tId < N*N) {
+        int valor = HitoriCM[tId];
+        for(int i = 0; i < N; i++){
+            pos = f+i;
+            doble = (ant && tId != pos && HitoriCM[pos] == valor)? true : doble;
+            ant = (tId != pos && HitoriCM[pos] == valor)? true : false;
+        }
+        if(doble) {
+            estado[tId] = 6;
+        }
+    }
+}
+
 __global__ void kernelMuerteF_CM(int *estado, int N){
 	
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
@@ -710,7 +801,16 @@ int main(int argc, char* argv[]){
         ms = 1000.0 * (double)(t2 - t1) / CLOCKS_PER_SEC;   
         printf("Tiempo de CPU: %5f \n", ms);
         //cout << "Tiempo CPU: " << ms << "[ms]" << endl;
-        
+
+                     
+        // Visualizar Hitori
+        updateHitori(Hitori_Str, Hit_State, N);
+        showMatrix(Hitori_Str, N, N);
+        printf("\n Hitori Estado \n");
+        showMatrix(Hit_State, N, N); 
+
+        SetHitoriState( Hitori, Hit_State, N);
+
         // Parte GPU 1 
         // Def tiempos GPU
         int* HitoriDev, *Hit_StateDev;
@@ -720,7 +820,7 @@ int main(int argc, char* argv[]){
         cudaEventCreate(&ct2);
 
         int block_size = 256;					 		              // múltiplo de 32
-        int grid_size  = (int)ceil((float)(N*N)/block_size);         // ceil : función techo 
+        int grid_size  = (int)ceil((float)(N*N)/block_size);          // ceil : función techo 
 
         cudaMalloc(&HitoriDev, sizeof(int)*N*N);
         cudaMalloc(&Hit_StateDev, sizeof(int)*N*N);
@@ -732,8 +832,8 @@ int main(int argc, char* argv[]){
         cudaMemcpy(Hit_StateDev, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
         kernelTripletF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         kernelTripletC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
-        kernelDobleF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
-        kernelDobleC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        //kernelDobleF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
+        //kernelDobleC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
         for(int i = 0; i < 10; i++){
             kernelMuerteF<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
             kernelMuerteC<<<grid_size, block_size>>>(HitoriDev, Hit_StateDev, N);
@@ -747,32 +847,46 @@ int main(int argc, char* argv[]){
 
         cout << "Tiempo GPU 1: " << dt << "[ms]" << endl;
 
+                
+        // Visualizar Hitori
+        updateHitori(Hitori_Str, Hit_State, N);
+        showMatrix(Hitori_Str, N, N);
+        printf("\n Hitori Estado \n");
+        showMatrix(Hit_State, N, N); 
+
+
+        SetHitoriState( Hitori, Hit_State, N);
+
         // Parte GPU 2
-        int* HitoriDev2, *Hit_StateDev2;
+        int* Hit_StateDev2;
+        cudaMalloc(&Hit_StateDev2, sizeof(int)*N*N);
     
         cudaEventRecord(ct1);
         cudaMemcpyToSymbol(HitoriCM, Hitori, N*N*sizeof(int), 0, cudaMemcpyHostToDevice); // Para kernel CM
         cudaMemcpy(Hit_StateDev2, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
         kernelTripletF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
         kernelTripletC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        //kernelDobleF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        //kernelDobleC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
         for(int i = 0; i < 10; i++){
             kernelMuerteF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
             kernelMuerteC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
             kernelRescateF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
             kernelRescateC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
-        }(
+        }
         cudaMemcpy(Hit_State, Hit_StateDev2, N*N*sizeof(int), cudaMemcpyDeviceToHost);
         cudaEventRecord(ct2);
         cudaEventSynchronize(ct2);
-        cudaEventElapsedTime(&dt2, ct1, ct2);
+        cudaEventElapsedTime(&dt, ct1, ct2);
+
 
         cout << "Tiempo GPU 2: " << dt << "[ms]" << endl;
-
+                     
         // Visualizar Hitori
         updateHitori(Hitori_Str, Hit_State, N);
         showMatrix(Hitori_Str, N, N);
-        printf("\n\n");
-        showMatrix(Hit_State, N, N);
+        printf("\n Hitori Estado \n");
+        showMatrix(Hit_State, N, N); 
 
         /*
         M = getRemainingMultiples(Hit_State, N);
@@ -837,10 +951,6 @@ int main(int argc, char* argv[]){
 
         }
         */
-
-
-
-
 
     }
 
