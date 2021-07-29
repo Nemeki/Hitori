@@ -367,8 +367,10 @@ void DobleF(int* hitori,int *estado, int N){
     }
 }
 
+
 void muerteF(int *hitori, int *estado, int N){
     int i, aux1, aux2;
+    int pos;
     for(i = 0; i < N*N; i++){
         int fila = i/N;
         int columna = i%N;
@@ -376,15 +378,22 @@ void muerteF(int *hitori, int *estado, int N){
         aux1 = estado[i];
         if(aux1 != 5 && aux1 !=6){
             for(int j = 0; j < N; j++){
-                aux2 = hitori[fila*N + j];
-                if(valor == aux2) aux1 = (estado[fila+j] == 5)? 6 : aux1;
+                pos = fila*N+j;
+                aux2 = hitori[pos];
+                if(valor == aux2){ 
+                    aux1 = (estado[pos] == 5)? 6 : aux1;
+                }
             }
+            estado[i] = aux1;
         }
     }
 }
 
+
 void muerteC(int *hitori, int *estado, int N){
     int i, aux1, aux2;
+    int pos;
+
     for(i = 0; i < N*N; i++){
         int fila = i/N;
         int columna = i%N;
@@ -392,9 +401,13 @@ void muerteC(int *hitori, int *estado, int N){
         aux1 = estado[i];
         if(aux1 != 5 && aux1 !=6){
             for(int j = 0; j < N; j++){
-                aux2 = hitori[columna + N*j];
-                if(valor == aux2) aux1 = (estado[columna + N*j] == 5)? 6 : aux1;
+                pos = columna+N*j;
+                aux2 = hitori[pos];
+                if(valor == aux2){ 
+                    aux1 = (estado[pos] == 5)? 6 : aux1;
+                }
             }
+            estado[i] = aux1;
         }
     }
 }
@@ -405,14 +418,14 @@ void funcionCPU(int* Hitori, int* estado, int N){
     // Ejecutar patrones 
     tripletF(Hitori, estado, N);
     tripletC(Hitori, estado, N);
-    //DobleF(Hitori, estado, N);
-    //DobleC(Hitori, estado, N);
+    DobleF(Hitori, estado, N);
+    DobleC(Hitori, estado, N);
  
     for(i = 0; i < 10; i++){
         muerteF(Hitori, estado, N);
         muerteC(Hitori, estado, N);
-        rescateC(Hitori, estado, N);
         rescateF(Hitori, estado, N);
+        rescateC(Hitori, estado, N);
     }
 
     return;
@@ -440,6 +453,7 @@ __global__ void kernelTripletF(int *hitori, int *estado, int N){
         next = (hitori[tId+1] == valor)? true : false;
         estado[tId] = (back && next) ? 5 : aux;
     }
+
 }
 
 __global__ void kernelTripletC(int *hitori, int *estado, int N){
@@ -958,8 +972,6 @@ int main(int argc, char* argv[]){
     }
 
     FILE.close();
-
-
 
     return 0;
 }
