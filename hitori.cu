@@ -15,6 +15,8 @@ using namespace std;
 /*                             Funciones de apoyo                             */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
+__constant__ int HitoriCM[5*5];  //FIXME: Cambiar cuando se actualice N y M
+
 // Función para Splitear un String
 void tokenize(string const &str, const char delim, vector<string> &out) {
     // construct a stream from the string
@@ -489,6 +491,127 @@ __global__ void kernelMuerteC(int *hitori, int *estado, int N){
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+/*                         GPU segunda implementacion                         */
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+
+__global__ void kernelTripletF_CM(int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = HitoriCM[tId];
+        aux = estado[tId];
+        back = (HitoriCM[tId-1] == valor)? true : false;
+        next = (HitoriCM[tId+1] == valor)? true : false;
+        estado[tId] = (back && next) ? 5 : aux;
+    }
+
+}
+
+__global__ void kernelTripletC_CM(int *estado, int N){
+
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool up, down;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = HitoriCM[tId];
+        aux = estado[tId];
+        up = (HitoriCM[tId-N] == valor)? true : false;
+        down = (HitoriCM[tId+N] == valor)? true : false;
+        estado[tId] = (up && down) ? 5 : aux;
+    }
+
+}
+
+__global__ void kernelRescateF_CM(int *estado, int N){
+
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool back, next;
+    int aux;
+
+    if(tId < N*N && c > 0 && c < N) {
+        int valor = HitoriCM[tId];
+        aux = estado[tId];
+        back = (estado[tId-1] == 6)? true : false;
+        next = (estado[tId+1] == 6)? true : false;
+        estado[tId] = (back || next) ? 5 : aux;
+    }
+
+}
+
+__global__ void kernelRescateC_CM(int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    bool up, down;
+    int aux;
+
+    if(tId < N*N && f > 0 && f < N) {
+        int valor = HitoriCM[tId];
+        aux = estado[tId];
+        up = (estado[tId-N] == 6)? true : false;
+        down = (estado[tId+N] == 6)? true : false;
+        estado[tId] = (up || down) ? 5 : aux;
+    }
+}
+
+__global__ void kernelMuerteF_CM(int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int aux1, aux2, aux3;
+
+    if(tId < N*N) {
+        int valor = HitoriCM[tId];
+        aux1 = estado[tId];
+        if(aux1 != 5 && aux1 != 6){
+            for(int i = 0; i < N; i++){
+                aux2 = HitoriCM[f+i];
+                if(valor == aux2){
+                    aux1 = (estado[f+i] == 5)? 6 : aux1;
+                }
+            }
+            estado[tId] = aux1;
+        }
+    }
+
+}
+
+__global__ void kernelMuerteC_CM(int *estado, int N){
+	
+    int tId = threadIdx.x + blockIdx.x * blockDim.x;
+    int f = tId / N; //Fila en que esta
+	int c = tId % N; //Columna en la que esta
+    int aux1, aux2, aux3;
+
+    if(tId < N*N) {
+        int valor = HitoriCM[tId];
+        aux1 = estado[tId];
+        if (aux1 != 5 && aux1 != 6){
+            for(int i = 0; i < N; i++){
+                aux2 = HitoriCM[c+N*i];
+                if(valor == aux2){
+                    aux1 = (estado[c+N*i] == 5)? 6 : aux1;
+                }
+            }
+            estado[tId] = aux1;
+        }
+    }
+}
+
+
+/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /*                                    Main                                    */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
@@ -542,7 +665,7 @@ int main(int argc, char* argv[]){
         printf("Tiempo de CPU: %5f \n", ms);
         //cout << "Tiempo CPU: " << ms << "[ms]" << endl;
         
-        // Parte GPU
+        // Parte GPU 1 
         // Def tiempos GPU
         int* HitoriDev, *Hit_StateDev;
         cudaEvent_t ct1, ct2;
@@ -575,6 +698,27 @@ int main(int argc, char* argv[]){
         cudaEventElapsedTime(&dt, ct1, ct2);
 
         cout << "Tiempo GPU 1: " << dt << "[ms]" << endl;
+
+        // Parte GPU 2
+        int* HitoriDev2, *Hit_StateDev2;
+    
+        cudaEventRecord(ct1);
+        cudaMemcpyToSymbol(HitoriCM, Hitori, N*N*sizeof(int), 0, cudaMemcpyHostToDevice); // Para kernel CM
+        cudaMemcpy(Hit_StateDev2, Hit_State, N*N*sizeof(int), cudaMemcpyHostToDevice);
+        kernelTripletF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        kernelTripletC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        for(int i = 0; i < 10; i++){
+            kernelMuerteF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+            kernelMuerteC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+            kernelRescateF_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+            kernelRescateC_CM<<<grid_size, block_size>>>(Hit_StateDev2, N);
+        }(
+        cudaMemcpy(Hit_State, Hit_StateDev2, N*N*sizeof(int), cudaMemcpyDeviceToHost);
+        cudaEventRecord(ct2);
+        cudaEventSynchronize(ct2);
+        cudaEventElapsedTime(&dt2, ct1, ct2);
+
+        cout << "Tiempo GPU 2: " << dt << "[ms]" << endl;
 
         // Visualizar Hitori
         updateHitori(Hitori_Str, Hit_State, N);
