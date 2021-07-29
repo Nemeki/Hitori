@@ -422,7 +422,7 @@ __global__ void kernelDobleF(int *hitori, int *estado, int N){
     if(tId < N*N) {
         int valor = hitori[tId];
         for(int i = 0; i < N; i++){
-            pos = f+i;
+            pos = f*N+i;
             doble = (ant && tId != pos && hitori[pos] == valor)? true : doble;
             ant = (tId != pos && hitori[pos] == valor)? true : false;
         }
@@ -496,16 +496,17 @@ __global__ void kernelMuerteF(int *hitori, int *estado, int N){
     int tId = threadIdx.x + blockIdx.x * blockDim.x;
     int f = tId / N; //Fila en que esta
 	int c = tId % N; //Columna en la que esta
-    int aux1, aux2, aux3;
+    int aux1, aux2, pos;
 
     if(tId < N*N) {
         int valor = hitori[tId];
         aux1 = estado[tId];
         if(aux1 != 5 && aux1 != 6){
             for(int i = 0; i < N; i++){
-                aux2 = hitori[f+i];
+                pos = f*N+i;
+                aux2 = hitori[pos];
                 if(valor == aux2){
-                    aux1 = (estado[f+i] == 5)? 6 : aux1;
+                    aux1 = (estado[pos] == 5)? 6 : aux1;
                 }
             }
             estado[tId] = aux1;
@@ -526,9 +527,10 @@ __global__ void kernelMuerteC(int *hitori, int *estado, int N){
         aux1 = estado[tId];
         if (aux1 != 5 && aux1 != 6){
             for(int i = 0; i < N; i++){
-                aux2 = hitori[c+N*i];
+                pos = c+N*i;
+                aux2 = hitori[pos];
                 if(valor == aux2){
-                    aux1 = (estado[c+N*i] == 5)? 6 : aux1;
+                    aux1 = (estado[pos] == 5)? 6 : aux1;
                 }
             }
             estado[tId] = aux1;
